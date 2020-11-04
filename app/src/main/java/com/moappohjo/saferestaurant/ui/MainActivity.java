@@ -1,37 +1,44 @@
-package com.moappohjo.saferestaurant;
+package com.moappohjo.saferestaurant.ui;
 
 import android.os.Bundle;
-import android.util.SparseArray;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.moappohjo.saferestaurant.R;
+import com.moappohjo.saferestaurant.ui.map.MapFragment;
 import com.naver.maps.map.NaverMapSdk;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
+
 public class MainActivity extends AppCompatActivity {
-    private SparseArray<Fragment.SavedState> savedStateSparseArray = new SparseArray<>();
-    private int currentSelectedItemId = R.id.navigation_map;
-    private static final String SAVED_STATE_CONTAINER_KEY = "ContainerKey";
-    private static final String SAVED_STATE_CURRENT_TAB_KEY = "CurrentTabKey";
+
+    private Fragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
-            savedStateSparseArray = savedInstanceState.getSparseParcelableArray(SAVED_STATE_CONTAINER_KEY);
-            currentSelectedItemId = savedInstanceState.getInt(SAVED_STATE_CURRENT_TAB_KEY);
+            mapFragment = getSupportFragmentManager().getFragment(savedInstanceState, "MapFragment");
         }
         NaverMapSdk.getInstance(this).setClient(
                 new NaverMapSdk.NaverCloudPlatformClient("sc9032srv9")
         );
         setContentView(R.layout.activity_main);
         BottomNavigationView navView = findViewById(R.id.nav_view);
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        NavHostFragment navHostFragment = (NavHostFragment)getSupportFragmentManager().findFragmentById(R.id.nav_host);
+        NavController navController = navHostFragment.getNavController();
         NavigationUI.setupWithNavController(navView, navController);
     }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        getSupportFragmentManager().putFragment(outState, "MapFragment", mapFragment);
+    }
 }

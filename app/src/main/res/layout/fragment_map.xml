@@ -6,10 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".ui.map.MapViewFragment">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/map_fragment"
+    <FrameLayout
+        android:id="@+id/map"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="8dp"
-        android:name="com.naver.maps.map.MapFragment"/>
+        android:layout_height="match_parent"/>
 </LinearLayout>

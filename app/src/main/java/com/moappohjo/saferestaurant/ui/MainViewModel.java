@@ -1,22 +1,19 @@
 package com.moappohjo.saferestaurant.ui;
 
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.ListFragment;
 import androidx.lifecycle.MutableLiveData;
 
-import com.moappohjo.saferestaurant.ui.map.MapFragment;
-
-import java.util.Map;
+import com.moappohjo.saferestaurant.ui.map.MapViewFragment;
 
 public class MainViewModel extends androidx.lifecycle.ViewModel {
-    private MutableLiveData<MapFragment> mapFragment;
+    private MutableLiveData<MapViewFragment> mapFragment;
     private MutableLiveData<ListFragment> listFragment;
 
-    public  void setMapFragmentData(MapFragment mapFragmentData) {
-        mapFragment.setValue(mapFragmentData);
+    public  void setMapFragmentData(MapViewFragment mapViewFragmentData) {
+        mapFragment.setValue(mapViewFragmentData);
     }
 
-    public MutableLiveData<MapFragment> getMapFragmentData() {
+    public MutableLiveData<MapViewFragment> getMapFragmentData() {
         if (mapFragment == null) {
             mapFragment = new MutableLiveData<>();
         }

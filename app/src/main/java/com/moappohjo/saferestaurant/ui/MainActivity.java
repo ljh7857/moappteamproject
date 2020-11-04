@@ -4,7 +4,6 @@ import android.os.Bundle;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.moappohjo.saferestaurant.R;
-import com.moappohjo.saferestaurant.ui.map.MapFragment;
 import com.naver.maps.map.NaverMapSdk;
 
 import androidx.annotation.NonNull;
@@ -24,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
-            mapFragment = getSupportFragmentManager().getFragment(savedInstanceState, "MapFragment");
+            mapFragment = getSupportFragmentManager().getFragment(savedInstanceState, "MapViewFragment");
         }
         NaverMapSdk.getInstance(this).setClient(
                 new NaverMapSdk.NaverCloudPlatformClient("sc9032srv9")
@@ -39,6 +38,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        getSupportFragmentManager().putFragment(outState, "MapFragment", mapFragment);
+        getSupportFragmentManager().putFragment(outState, "MapViewFragment", mapFragment);
     }
 }

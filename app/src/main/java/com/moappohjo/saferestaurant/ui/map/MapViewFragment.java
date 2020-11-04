@@ -20,7 +20,7 @@ import com.moappohjo.saferestaurant.ui.MainViewModel;
 
 import javax.inject.Inject;
 
-public class MapFragment extends Fragment {
+public class MapViewFragment extends Fragment {
 
     private MapViewModel mapViewModel;
     private MainViewModel mainViewModel;

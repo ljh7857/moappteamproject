@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/navigation_map"
-        android:name="com.moappohjo.saferestaurant.ui.map.MapFragment"
+        android:name="com.moappohjo.saferestaurant.ui.map.MapViewFragment"
         android:label="@string/title_map"
         tools:layout="@layout/fragment_map" />
 

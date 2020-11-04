@@ -1,4 +1,4 @@
-package com.example.saferestaurant;
+package com.moappohjo.saferestaurant;
 
 import org.junit.Test;
 

@@ -7,13 +7,13 @@
 
     <fragment
         android:id="@+id/navigation_map"
-        android:name="com.example.saferestaurant.ui.map.MapFragment"
+        android:name="com.moappohjo.saferestaurant.ui.map.MapFragment"
         android:label="@string/title_map"
         tools:layout="@layout/fragment_map" />
 
     <fragment
         android:id="@+id/navigation_list"
-        android:name="com.example.saferestaurant.ui.list.ListFragment"
+        android:name="com.moappohjo.saferestaurant.ui.list.ListFragment"
         android:label="@string/title_list"
         tools:layout="@layout/fragment_list" />
 </navigation>

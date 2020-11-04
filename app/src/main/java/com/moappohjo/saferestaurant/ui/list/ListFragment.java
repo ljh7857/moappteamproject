@@ -1,4 +1,4 @@
-package com.example.saferestaurant.ui.map;
+package com.moappohjo.saferestaurant.ui.list;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,19 +12,19 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.example.saferestaurant.R;
+import com.moappohjo.saferestaurant.R;
 
-public class MapFragment extends Fragment {
+public class ListFragment extends Fragment {
 
-    private MapViewModel mapViewModel;
+    private ListViewModel listViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        mapViewModel =
-                ViewModelProviders.of(this).get(MapViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_map, container, false);
-        final TextView textView = root.findViewById(R.id.text_map);
-        mapViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        listViewModel =
+                ViewModelProviders.of(this).get(ListViewModel.class);
+        View root = inflater.inflate(R.layout.fragment_list, container, false);
+        final TextView textView = root.findViewById(R.id.text_list);
+        listViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 textView.setText(s);

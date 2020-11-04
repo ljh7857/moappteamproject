@@ -1,16 +1,16 @@
-package com.example.saferestaurant.ui.list;
+package com.moappohjo.saferestaurant.ui.map;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class ListViewModel extends ViewModel {
+public class MapViewModel extends ViewModel {
 
     private MutableLiveData<String> mText;
 
-    public ListViewModel() {
+    public MapViewModel() {
         mText = new MutableLiveData<>();
-        mText.setValue("This is dashboard fragment");
+        mText.setValue("This is home fragment");
     }
 
     public LiveData<String> getText() {

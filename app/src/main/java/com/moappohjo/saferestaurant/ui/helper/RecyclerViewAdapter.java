@@ -12,16 +12,27 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.auth.api.signin.internal.HashAccumulator;
 import com.moappohjo.saferestaurant.R;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
     Context context;
     List<CardViewItem> items;
     int item_layout;
+
+    public void updateCardViewItemList(List<CardViewItem> newItems) {
+        final DiffCallback<CardViewItem> diffCallback = new DiffCallback<CardViewItem>(this.items, newItems);
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+        items.clear();
+        items.addAll(newItems);
+        diffResult.dispatchUpdatesTo(this);
+    }
 
     public RecyclerViewAdapter(Context context, List<CardViewItem> items, int item_layout) {
         this.context = context;
@@ -47,6 +58,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         v.setLayoutParams(lp);
         return new ViewHolder(v);
     }
+
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerViewAdapter.ViewHolder holder, int position) {
@@ -90,6 +102,44 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                     }
                 }
             });
+        }
+    }
+
+    public static class UID {
+        private static final AtomicInteger count = new AtomicInteger(0);
+        final int id;
+        public UID() {
+            id = count.incrementAndGet();
+        }
+    }
+    class DiffCallback<T extends UID & Comparable<T>> extends DiffUtil.Callback {
+        private List<T> oldList;
+        private List<T> newList;
+
+        public DiffCallback(List<T> oldList, List<T> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).id == newList.get(newItemPosition).id;
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).equals(newList.get(newItemPosition));
         }
     }
 }

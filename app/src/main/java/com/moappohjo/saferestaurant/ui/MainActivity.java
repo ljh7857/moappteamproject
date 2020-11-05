@@ -9,7 +9,7 @@ import android.widget.Toast;
 import com.moappohjo.saferestaurant.R;
 import com.moappohjo.saferestaurant.ui.helper.CardViewItem;
 import com.moappohjo.saferestaurant.ui.helper.RecyclerViewAdapter;
-import com.naver.maps.map.CameraUpdate;
+import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
@@ -24,6 +24,8 @@ import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private NaverMap naverMap;
     private FusedLocationSource locationSource;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
+    private MainViewModel viewModel = new MainViewModel();
+    private RecyclerViewAdapter recyclerViewAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,21 +57,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(layoutManager);
 
-        List<CardViewItem> items = new ArrayList<>();
-        CardViewItem[] item = new CardViewItem[7];
-        item[0] = new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp);
-        item[1] = new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp);
-        item[2] = new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp);
-        item[3] = new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp);
-        item[4] = new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp);
-        item[5] = new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp);
-        item[6] = new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp);
+        int i = 3;
+        while(i-->0)
+            viewModel.items.add(new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp));
 
-        int i = 7;
-        while (i --> 0) {
-            items.add(item[i]);
-        }
-        RecyclerViewAdapter recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(), items, R.layout.activity_main);
+        recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(), viewModel.items.getValue(), R.layout.activity_main);
+//        viewModel.items.observe(this, new Observer() {
+//            @Override
+//            public void onChanged(Object o) {
+//                recyclerViewAdapter.updateCardViewItemList(viewModel.items.getValue());
+//            }});
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int pos) {

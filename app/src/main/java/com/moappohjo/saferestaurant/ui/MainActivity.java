@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.moappohjo.saferestaurant.R;
 import com.moappohjo.saferestaurant.ui.helper.CardViewItem;
@@ -76,8 +77,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         while (i --> 0) {
             items.add(item[i]);
         }
-
-        recyclerView.setAdapter(new RecyclerViewAdapter(getApplicationContext(), items, R.layout.activity_main));
+        RecyclerViewAdapter recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(), items, R.layout.activity_main);
+        recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View v, int pos) {
+                Toast.makeText(getApplicationContext(), "clcik" + pos, Toast.LENGTH_SHORT).show();
+            }
+        });
+        recyclerView.setAdapter(recyclerViewAdapter);
 
     }
 

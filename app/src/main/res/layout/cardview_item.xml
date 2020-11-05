@@ -24,6 +24,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
                     <TextView
+                        android:id="@+id/name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textStyle="bold"
@@ -32,6 +33,7 @@
                         android:paddingRight="10dp"
                         android:text="황금알보쌈정식" />
                     <TextView
+                        android:id="@+id/type"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textStyle="bold"
@@ -41,12 +43,14 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/address"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="15sp"
                     android:text="대구광역시 북구 산격동 1307-24" />
 
                 <TextView
+                    android:id="@+id/tell"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="15sp"
@@ -54,6 +58,7 @@
             </LinearLayout>
 
             <ImageView
+                android:id="@+id/image"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"

@@ -4,4 +4,6 @@
     <string name="title_map">지도</string>
     <string name="title_list">리스트</string>
     <string name="desc_searchView">장소, 주소 검색</string>
+    <string name="show_list">목록보기</string>
+    <string name="hide_list">목록접기</string>
 </resources>

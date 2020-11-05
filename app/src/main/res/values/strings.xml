@@ -3,4 +3,6 @@
     <string name="title_map">Map</string>
     <string name="title_list">List</string>
     <string name="desc_searchView">Search Location, Adress</string>
+    <string name="show_list">SHOW LIST</string>
+    <string name="hide_list">HIDE LIST</string>
 </resources>

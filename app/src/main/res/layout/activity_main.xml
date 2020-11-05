@@ -21,6 +21,7 @@
             app:iconifiedByDefault="false"
             app:queryHint="@string/desc_searchView"/>
         <LinearLayout
+            android:animateLayoutChanges="true"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"

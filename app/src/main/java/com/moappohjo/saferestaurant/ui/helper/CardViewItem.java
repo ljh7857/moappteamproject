@@ -4,8 +4,12 @@ import androidx.annotation.Nullable;
 
 import com.google.android.gms.auth.api.signin.internal.HashAccumulator;
 
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class CardViewItem extends RecyclerViewAdapter.UID implements Comparable<CardViewItem>{
+
+public class CardViewItem implements Comparable<CardViewItem>{
+    static final AtomicInteger count = new AtomicInteger(0);
+    final int id;
     String name;
     String address;
     String type;
@@ -18,6 +22,7 @@ public class CardViewItem extends RecyclerViewAdapter.UID implements Comparable<
         this.type = type;
         this.tell = tell;
         this.image = image;
+        id = count.incrementAndGet();
     }
 
     @Override

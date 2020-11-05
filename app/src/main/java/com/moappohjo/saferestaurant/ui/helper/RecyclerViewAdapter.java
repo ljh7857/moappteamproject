@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -15,11 +14,10 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.auth.api.signin.internal.HashAccumulator;
 import com.moappohjo.saferestaurant.R;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
     Context context;
@@ -27,7 +25,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     int item_layout;
 
     public void updateCardViewItemList(List<CardViewItem> newItems) {
-        final DiffCallback<CardViewItem> diffCallback = new DiffCallback<CardViewItem>(this.items, newItems);
+        final DiffCallback diffCallback = new DiffCallback(this.items, newItems);
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
         items.clear();
         items.addAll(newItems);
@@ -36,7 +34,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     public RecyclerViewAdapter(Context context, List<CardViewItem> items, int item_layout) {
         this.context = context;
-        this.items = items;
+        this.items = new ArrayList<>(items);
         this.item_layout = item_layout;
     }
 
@@ -105,18 +103,11 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
-    public static class UID {
-        private static final AtomicInteger count = new AtomicInteger(0);
-        final int id;
-        public UID() {
-            id = count.incrementAndGet();
-        }
-    }
-    class DiffCallback<T extends UID & Comparable<T>> extends DiffUtil.Callback {
-        private List<T> oldList;
-        private List<T> newList;
+    class DiffCallback extends DiffUtil.Callback {
+        private List<CardViewItem> oldList;
+        private List<CardViewItem> newList;
 
-        public DiffCallback(List<T> oldList, List<T> newList) {
+        public DiffCallback(List<CardViewItem> oldList, List<CardViewItem> newList) {
             this.oldList = oldList;
             this.newList = newList;
         }
@@ -135,6 +126,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         @Override
         public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
             return oldList.get(oldItemPosition).id == newList.get(newItemPosition).id;
+
         }
 
         @Override

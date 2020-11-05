@@ -62,18 +62,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             viewModel.items.add(new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp));
 
         recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(), viewModel.items.getValue(), R.layout.activity_main);
-//        viewModel.items.observe(this, new Observer() {
-//            @Override
-//            public void onChanged(Object o) {
-//                recyclerViewAdapter.updateCardViewItemList(viewModel.items.getValue());
-//            }});
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int pos) {
                 Toast.makeText(getApplicationContext(), "clcik" + pos, Toast.LENGTH_SHORT).show();
+                viewModel.items.add(new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp));
             }
         });
         recyclerView.setAdapter(recyclerViewAdapter);
+        viewModel.items.observe(this, new Observer<List<CardViewItem>>() {
+            @Override
+            public void onChanged(List<CardViewItem> cardViewItems) {
+                recyclerViewAdapter.updateCardViewItemList(cardViewItems);
+            }
+        });
+
+
     }
 
     private void setSearchView() {

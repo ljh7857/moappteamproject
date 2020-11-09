@@ -3,6 +3,8 @@ package com.moappohjo.saferestaurant.ui;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -15,17 +17,26 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class DataManager {
     private Context context;
-    public DataManager(Context context){
+    Address address;
+    public DataManager(Context context, Address address){
         this.context = context;
+        this.address = address;
     }
     public boolean loadData(){
         if(haveNetworkConnection(this.context)){
-            //비동기 클래스를 사용해 사용자 관련 정보들을 가져온다.
-            FetchItemTask ft = new FetchItemTask(this.context);
-            ft.execute();
+            FetchItemTask ft = new FetchItemTask(this.context, this.address);
+            try {
+                String result = ft.execute().get();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         else{
 
@@ -33,38 +44,23 @@ public class DataManager {
         return true;
     }
 
-    protected boolean haveNetworkConnection(Context context) {
-        boolean haveConnectedWifi = false;
-        boolean haveConnectedMobile = false;
-
-        ConnectivityManager cm =
-                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
-        for (NetworkInfo ni : netInfo) {
-            if (ni.getTypeName().equalsIgnoreCase("WIFI"))
-                haveConnectedWifi = ni.isConnected();
-            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
-                haveConnectedMobile = ni.isConnected();
-        }
-        return haveConnectedWifi || haveConnectedMobile;
-    }
-
     //네트워크와 통신하는 과정이므로 비동기 방식을 사용해야 함.
     private class FetchItemTask extends AsyncTask<Void, Void, String> {
         ProgressDialog progressDialog;
         Context context;
-        public FetchItemTask(Context context){
+        Address address;
+        public FetchItemTask(Context context, Address address){
             super();
             this.context = context;
+            this.address = address;
         }
 
         protected void onPreExecute(){
-            progressDialog = new ProgressDialog(this.context);
-            progressDialog.setMessage("안심식당 정보 로딩중...");
-            progressDialog.setCancelable(false);
-            progressDialog.setProgressStyle(android.R.style.Widget_ProgressBar_Horizontal);
-            progressDialog.show();
+//            progressDialog = new ProgressDialog(this.context);
+//            progressDialog.setMessage("안심식당 정보 로딩중...");
+//            progressDialog.setCancelable(false);
+//            progressDialog.setProgressStyle(android.R.style.Widget_ProgressBar_Horizontal);
+//            progressDialog.show();
         }
 
         //백그라운드에서 실행하는 내용
@@ -82,26 +78,27 @@ public class DataManager {
                 int totalCnt = Integer.parseInt(result.select("totalCnt").text());
 
                 //한 번의 요청 당 최대 1000개의 식당을 검색할 수 있습니다.
+                //1000개씩 나눠 받은 결과를 result에 html형태로 붙여넣습니다.
                 for(int startIndex=1; startIndex<=totalCnt; startIndex+=1000){
                     int endIndex = (startIndex+999<totalCnt)? startIndex+999: totalCnt;
                     String partURL = "http://211.237.50.150:7080/openapi/"+ APIKEY +
                             "/xml/Grid_20200713000000000605_1/"+startIndex+"/"+endIndex+"?&RELAX_USE_YN=Y";
-                    //System.out.println(partURL);
-                    result = Jsoup.connect(partURL).method(Connection.Method.GET).execute().parse();
-                    Elements restaurantsInfo = result.select("row");
-                    //System.out.println(restaurantsInfo.size());
-                    for(int idx=0; idx<endIndex-startIndex; idx++){
-                        Element element = restaurantsInfo.get(idx);
-                        Log.i(startIndex+idx+"",element.select("RELAX_RSTRNT_NM").text());
-//                        Log.i(idx+"",element.select("ROW_NUM").text());
-                        String restaurantName = element.select("RELAX_RSTRNT_NM").text().replaceAll("'", "-");
-//                        db.execSQL("INSERT OR REPLACE INTO Restaurant VALUES("+element.select("RELAX_SEQ").text()+", "+element.select("RELAX_ZIPCODE").text()+", " +
-//                                "'"+element.select("RELAX_SI_NM").text()+"', '"+element.select("RELAX_SIDO_NM").text()+"', '"+restaurantName+"', " +
-//                                "'"+element.select("RELAX_RSTRNT_REPRESENT").text()+"', '"+element.select("RELAX_ADD1").text().replaceAll("'", "")+"', '"+element.select("RELAX_ADD2").text()+"', " +
-//                                "'"+element.select("RELAX_GUBUN").text()+"', '"+element.select("RELAX_GUBUN_DETAIL").text()+"', '"+element.select("RELAX_RSTRNT_TEL").text()+"', " +
-//                                "'"+element.select("RELAX_RSTRNT_ETC").text()+"');");
-                    }
+                    result.append(Jsoup.connect(partURL).method(Connection.Method.GET).execute().parse().html());
                 }
+
+//                for(int idx=0; idx<totalCnt; idx++){
+//                    Elements restaurantsInfo = result.select("row");
+//                    Element element = restaurantsInfo.get(idx);
+//                    Log.i(idx+"",element.select("RELAX_RSTRNT_NM").text());
+////                        Log.i(idx+"",element.select("ROW_NUM").text());
+//                    String restaurantName = element.select("RELAX_RSTRNT_NM").text().replaceAll("'", "-");
+//                }
+                Geocoder g = new Geocoder(this.context);
+                List<Address> addresses = null;
+                String addr = result.select("row").get(0).select("RELAX_ADD1").text();
+                Log.i("address", addr);
+                addresses = g.getFromLocationName(addr, 1);
+                Log.i("gps", addresses.get(0).getLatitude()+ ", " + addresses.get(0).getLongitude());
             } catch (IOException e) {
                 Log.i("FAIL", "Exception occured");
                 e.printStackTrace();
@@ -113,8 +110,24 @@ public class DataManager {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            progressDialog.dismiss();
         }
+    }
+
+    protected boolean haveNetworkConnection(Context context) {
+        boolean haveConnectedWifi = false;
+        boolean haveConnectedMobile = false;
+
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+        for (NetworkInfo ni : netInfo) {
+            if (ni.getTypeName().equalsIgnoreCase("WIFI"))
+                haveConnectedWifi = ni.isConnected();
+            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
+                haveConnectedMobile = ni.isConnected();
+        }
+        return haveConnectedWifi || haveConnectedMobile;
     }
 }
 

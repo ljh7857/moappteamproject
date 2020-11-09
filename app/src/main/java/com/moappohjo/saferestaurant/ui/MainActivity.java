@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.location.Address;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -71,7 +72,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         setSearchView();
         setRecyclerView();
-        DataManager dm = new DataManager(getApplicationContext());
+        //사용자의 현재 위치를 얻어서 넣어주세요.
+        Address address=null;
+        DataManager dm = new DataManager(getApplicationContext(), address);
         if(!dm.loadData()){
 
         }

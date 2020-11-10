@@ -3,12 +3,16 @@ package com.moappohjo.saferestaurant.ui.views;
 import android.graphics.Color;
 import android.location.Address;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.moappohjo.saferestaurant.R;
 import com.moappohjo.saferestaurant.dm.DataManager;
 import com.moappohjo.saferestaurant.pd.model.Restaurant;
+import com.moappohjo.saferestaurant.ui.helper.Utils;
 import com.moappohjo.saferestaurant.ui.viewmodels.MainViewModel;
 import com.moappohjo.saferestaurant.ui.helper.RecyclerViewAdapter;
 import com.naver.maps.map.LocationTrackingMode;
@@ -29,7 +33,10 @@ import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -48,12 +55,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         setSearchView();
         setRecyclerView();
+        setMarkers();
         //사용자의 현재 위치를 얻어서 넣어주세요.
-        Address address=null;
-        DataManager dm = new DataManager(getApplicationContext(), address);
-        if(!dm.loadData()){
+        //Address address=null;
+        //DataManager dm = new DataManager(getApplicationContext(), address);
+//        if(!dm.loadData()){
+//
+//        }
+    }
 
-        }
+    private void setMarkers() {
+
     }
 
     private void setRecyclerView() {
@@ -62,9 +74,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(layoutManager);
 
-        int i = 3;
-        while(i-->0)
-            viewModel.items.add(new Restaurant(i, "황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234"));
+        List<Restaurant> restaurants = getRestaurantsFrom("restaurants.json");
+        viewModel.items.addAll(restaurants);
 
         recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(), viewModel.items.getValue(), R.layout.activity_main);
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
@@ -144,5 +155,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             b.setText(getResources().getString(R.string.show_list));
         }
     }
+
+    private List<Restaurant> getRestaurantsFrom(final String fileName) {
+        String jsonFileString = Utils.getJsonFromAssets(getApplicationContext(), fileName);
+        Gson gs = new Gson();
+        Type listRestaurantType = new TypeToken<List<Restaurant>>() {}.getType();
+        List<Restaurant> jsonList = gs.fromJson(jsonFileString, listRestaurantType);
+        List<Restaurant> restaurants = jsonList.stream().map((r) -> {
+            r.image = R.drawable.ic_food;
+            return r;
+        }).collect(Collectors.toList());
+        return restaurants;
+    }
+
 
 }

@@ -2,6 +2,8 @@ package com.moappohjo.saferestaurant.pd.model;
 
 import androidx.annotation.Nullable;
 
+import com.moappohjo.saferestaurant.R;
+
 
 public class Restaurant implements Comparable<Restaurant> {
     public final int id;
@@ -9,7 +11,7 @@ public class Restaurant implements Comparable<Restaurant> {
     public final String address;
     public final String type;
     public final String tell;
-    public final int image;
+    public int image;
 
     public Restaurant(int id, String name, String address, String type, String tell) {
         this.name = name;
@@ -21,7 +23,7 @@ public class Restaurant implements Comparable<Restaurant> {
     }
 
     private int imageOf(String type) {
-        int ret = android.R.drawable.ic_dialog_email;
+        int ret = R.drawable.ic_food;
         switch (type) {
             case "":
                 break;

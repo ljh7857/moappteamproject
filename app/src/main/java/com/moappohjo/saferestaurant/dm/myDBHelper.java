@@ -1,4 +1,4 @@
-package com.moappohjo.saferestaurant.ui;
+package com.moappohjo.saferestaurant.dm;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;

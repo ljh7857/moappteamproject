@@ -1,4 +1,4 @@
-package com.moappohjo.saferestaurant.ui;
+package com.moappohjo.saferestaurant.dm;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -13,8 +13,6 @@ import android.util.Log;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.List;

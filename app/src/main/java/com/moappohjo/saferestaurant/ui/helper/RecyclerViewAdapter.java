@@ -15,16 +15,17 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.moappohjo.saferestaurant.R;
+import com.moappohjo.saferestaurant.pd.model.Restaurant;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
     Context context;
-    List<CardViewItem> items;
+    List<Restaurant> items;
     int item_layout;
 
-    public void updateCardViewItemList(List<CardViewItem> newItems) {
+    public void updateCardViewItemList(List<Restaurant> newItems) {
         final DiffCallback diffCallback = new DiffCallback(this.items, newItems);
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
         items.clear();
@@ -32,7 +33,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         diffResult.dispatchUpdatesTo(this);
     }
 
-    public RecyclerViewAdapter(Context context, List<CardViewItem> items, int item_layout) {
+    public RecyclerViewAdapter(Context context, List<Restaurant> items, int item_layout) {
         this.context = context;
         this.items = new ArrayList<>(items);
         this.item_layout = item_layout;
@@ -60,7 +61,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerViewAdapter.ViewHolder holder, int position) {
-        final CardViewItem item = items.get(position);
+        final Restaurant item = items.get(position);
         Drawable drawable = ContextCompat.getDrawable(context, item.image);
         holder.image.setBackground(drawable);
         holder.name.setText(item.name);
@@ -104,10 +105,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     class DiffCallback extends DiffUtil.Callback {
-        private List<CardViewItem> oldList;
-        private List<CardViewItem> newList;
+        private List<Restaurant> oldList;
+        private List<Restaurant> newList;
 
-        public DiffCallback(List<CardViewItem> oldList, List<CardViewItem> newList) {
+        public DiffCallback(List<Restaurant> oldList, List<Restaurant> newList) {
             this.oldList = oldList;
             this.newList = newList;
         }

@@ -1,25 +1,16 @@
-package com.moappohjo.saferestaurant.ui;
+package com.moappohjo.saferestaurant.ui.views;
 
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.location.Address;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
 
 import com.moappohjo.saferestaurant.R;
-import com.moappohjo.saferestaurant.ui.helper.CardViewItem;
+import com.moappohjo.saferestaurant.dm.DataManager;
+import com.moappohjo.saferestaurant.pd.model.Restaurant;
+import com.moappohjo.saferestaurant.ui.viewmodels.MainViewModel;
 import com.moappohjo.saferestaurant.ui.helper.RecyclerViewAdapter;
-import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
@@ -34,26 +25,11 @@ import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
 
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -88,21 +64,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         int i = 3;
         while(i-->0)
-            viewModel.items.add(new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp));
+            viewModel.items.add(new Restaurant(i, "황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234"));
 
         recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(), viewModel.items.getValue(), R.layout.activity_main);
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int pos) {
-                Toast.makeText(getApplicationContext(), "clcik" + pos, Toast.LENGTH_SHORT).show();
-                viewModel.items.add(new CardViewItem("황금알보쌈정식", "대구광역시 북구 산격동 1307-24", "족발, 보쌈", "032-123-1234", R.drawable.ic_home_black_24dp));
+               // on click
             }
         });
         recyclerView.setAdapter(recyclerViewAdapter);
-        viewModel.items.observe(this, new Observer<List<CardViewItem>>() {
+        viewModel.items.observe(this, new Observer<List<Restaurant>>() {
             @Override
-            public void onChanged(List<CardViewItem> cardViewItems) {
-                recyclerViewAdapter.updateCardViewItemList(cardViewItems);
+            public void onChanged(List<Restaurant> restaurants) {
+                recyclerViewAdapter.updateCardViewItemList(restaurants);
             }
         });
 

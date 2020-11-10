@@ -59,11 +59,17 @@ public class DataManager {
         @Override
         protected String doInBackground(Void... voids) {
             String APIKEY = "0f8513fb24b87da71f5eb1594e0ac11b35b2be4afe6c06a1c543dcd9169a376f";
-            String APIURL = "http://211.237.50.150:7080/openapi/"+ APIKEY +
-                    "/xml/Grid_20200713000000000605_1/1/1?&RELAX_USE_YN=Y";
+
             //현재는 실행마다 사이트에 접속해서 업데이트를 하는 구조인데, 이후 주기적으로 업데이트하도록 수정 예정임.
             myDBHelper dbHelper = new myDBHelper(this.context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+            return "Fail";
+        }
+
+        public void updateAllData(String APIKEY){
+            String APIURL = "http://211.237.50.150:7080/openapi/"+ APIKEY +
+                    "/xml/Grid_20200713000000000605_1/1/1?&RELAX_USE_YN=Y";
             try {
                 //우성 길이를 하나만 가져와서 총 몇 개의 안심식당이 있는지 확인합니다.
                 Document result = Jsoup.connect(APIURL).method(Connection.Method.GET).execute().parse();
@@ -95,7 +101,10 @@ public class DataManager {
                 Log.i("FAIL", "Exception occured");
                 e.printStackTrace();
             }
-            return "Fail";
+        }
+
+        public void updateSpecificRegion(){
+
         }
 
         //포그라운드에서 실행하는 내용

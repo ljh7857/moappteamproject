@@ -11,10 +11,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.moappohjo.saferestaurant.R;
 import com.moappohjo.saferestaurant.dm.DataManager;
+import com.moappohjo.saferestaurant.pd.model.MarkerDTO;
 import com.moappohjo.saferestaurant.pd.model.Restaurant;
 import com.moappohjo.saferestaurant.ui.helper.Utils;
 import com.moappohjo.saferestaurant.ui.viewmodels.MainViewModel;
 import com.moappohjo.saferestaurant.ui.helper.RecyclerViewAdapter;
+import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
@@ -22,6 +25,8 @@ import com.naver.maps.map.NaverMapSdk;
 import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.UiSettings;
 import com.naver.maps.map.overlay.LocationOverlay;
+import com.naver.maps.map.overlay.Marker;
+import com.naver.maps.map.overlay.Overlay;
 import com.naver.maps.map.util.FusedLocationSource;
 
 import androidx.annotation.NonNull;
@@ -47,25 +52,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
     private MainViewModel viewModel = new MainViewModel();
     private RecyclerViewAdapter recyclerViewAdapter;
+    private Button showListButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setNaverMap();
         setContentView(R.layout.activity_main);
+        showListButton = findViewById(R.id.showListButton);
+        setShowListObserver();
         setSearchView();
         setRecyclerView();
-        setMarkers();
         //사용자의 현재 위치를 얻어서 넣어주세요.
-        //Address address=null;
-        //DataManager dm = new DataManager(getApplicationContext(), address);
-//        if(!dm.loadData()){
-//
-//        }
+        Address address=null;
+        DataManager dm = new DataManager(getApplicationContext(), address);
+        if(!dm.loadData()){
+
+        }
+    }
+
+    private void setShowListObserver() {
+        viewModel.getIsListShowing().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean showList) {
+                if (showList) {recyclerView.setVisibility(View.VISIBLE); showListButton.setText(getResources().getString(R.string.hide_list));}
+                else {recyclerView.setVisibility(View.GONE); showListButton.setText(getResources().getString(R.string.show_list));}
+
+            }
+        });
     }
 
     private void setMarkers() {
-
+        List<Marker> markers = getMarkersFrom("markers.json");
+        viewModel.markers.addAll(markers);
+        viewModel.markers.getValue().stream().forEach((m)->{m.setMap(naverMap);});
     }
 
     private void setRecyclerView() {
@@ -81,7 +101,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int pos) {
-               // on click
+                viewModel.setIsListShowing(false);
+                Restaurant restaurant = recyclerViewAdapter.items.get(pos);
+                List<Marker> markers = viewModel.markers.getValue().stream().filter((m)->(m.getZIndex() == restaurant.id)).collect(Collectors.toList());
+                if (markers.size() == 0) return;
+                Marker marker = markers.get(0);
+                CameraUpdate cameraUpdate = CameraUpdate.scrollTo(marker.getPosition());
+                naverMap.moveCamera(cameraUpdate);
+
             }
         });
         recyclerView.setAdapter(recyclerViewAdapter);
@@ -143,17 +170,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         naverMap.setLocationSource(locationSource);
         LocationOverlay locationOverlay = naverMap.getLocationOverlay();
         locationOverlay.setVisible(true);
+        setMarkers();
     }
 
     public void onClickShowList(View v) {
-        Button b = (Button)v;
-        if (b.getText().equals(getResources().getString(R.string.show_list))) {
-            recyclerView.setVisibility(View.VISIBLE);
-            b.setText(getResources().getString(R.string.hide_list));
-        } else {
-            recyclerView.setVisibility(View.GONE);
-            b.setText(getResources().getString(R.string.show_list));
-        }
+        viewModel.setIsListShowing(!viewModel.getIsListShowing().getValue());
     }
 
     private List<Restaurant> getRestaurantsFrom(final String fileName) {
@@ -166,6 +187,37 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return r;
         }).collect(Collectors.toList());
         return restaurants;
+    }
+
+    private List<Marker> getMarkersFrom(final String fileName) {
+        String jsonFileString = Utils.getJsonFromAssets(getApplicationContext(), fileName);
+        Gson gs = new Gson();
+        Type listMarkerType = new TypeToken<List<MarkerDTO>>() {}.getType();
+        List<MarkerDTO> jsonList = gs.fromJson(jsonFileString, listMarkerType);
+        List<Marker> markers = jsonList.stream().map((m) -> {
+            Marker marker = new Marker();
+            // z index as id
+            marker.setZIndex(m.id);
+            marker.setPosition(new LatLng(m.lat, m.lng));
+            marker.setCaptionText(m.caption);
+            marker.setCaptionColor(Color.BLUE);
+            marker.setCaptionHaloColor(Color.rgb(200,255,200));
+            marker.setCaptionTextSize(18);
+            marker.setOnClickListener(new Overlay.OnClickListener() {
+                @Override
+                public boolean onClick(@NonNull Overlay overlay) {
+                    List<Restaurant> items = viewModel.items.getValue().stream().filter((i)->(i.id == overlay.getZIndex())).collect(Collectors.toList());
+                    if (items.size() == 0) return false;
+                    Restaurant restaurant = items.get(0);
+                    viewModel.items.remove(restaurant);
+                    viewModel.items.add(0, restaurant);
+                    viewModel.setIsListShowing(true);
+                    return true;
+                }
+            });
+            return marker;
+        }).collect(Collectors.toList());
+        return markers;
     }
 
 

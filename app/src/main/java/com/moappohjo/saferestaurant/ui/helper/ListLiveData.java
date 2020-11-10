@@ -16,6 +16,11 @@ public class ListLiveData<T> extends MutableLiveData<List<T>> {
         this.setValue(temp);
     }
 
+    public void add(int index, T item) {
+        temp.add(index, item);
+        this.setValue(temp);
+    }
+
     public void addAll(List<T> items) {
         temp.addAll(items);
         this.setValue(temp);

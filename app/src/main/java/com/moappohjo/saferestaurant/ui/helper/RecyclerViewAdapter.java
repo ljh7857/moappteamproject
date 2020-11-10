@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
-    Context context;
-    List<Restaurant> items;
+    private Context context;
+    public List<Restaurant> items;
     int item_layout;
 
     public void updateCardViewItemList(List<Restaurant> newItems) {

@@ -28,13 +28,7 @@ public class DataManager {
     public boolean loadData(){
         if(haveNetworkConnection(this.context)){
             FetchItemTask ft = new FetchItemTask(this.context, this.address);
-            try {
-                String result = ft.execute().get();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            ft.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
         else{
 

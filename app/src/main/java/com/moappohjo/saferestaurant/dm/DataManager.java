@@ -2,6 +2,7 @@ package com.moappohjo.saferestaurant.dm;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Geocoder;
@@ -13,8 +14,12 @@ import android.util.Log;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -59,15 +64,23 @@ public class DataManager {
         @Override
         protected String doInBackground(Void... voids) {
             String APIKEY = "0f8513fb24b87da71f5eb1594e0ac11b35b2be4afe6c06a1c543dcd9169a376f";
-
-            //현재는 실행마다 사이트에 접속해서 업데이트를 하는 구조인데, 이후 주기적으로 업데이트하도록 수정 예정임.
             myDBHelper dbHelper = new myDBHelper(this.context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+            //db에서 restaurant data가 있는지 판별하고, 없다면 모두 집어넣는다.
+            Cursor c = db.rawQuery("SELECT COUNT(*) FROM Restaurant", null);
+            if(c.getInt(0)==0){
+                updateAllData(APIKEY, db);
+            }
+            else {
+                //사용자의 위치를 구하고, 해당 시도의 정보 중 outdated 된 것이 있다면 해당 지역을 update 한다.
+
+            }
 
             return "Fail";
         }
 
-        public void updateAllData(String APIKEY){
+        public void updateAllData(String APIKEY, SQLiteDatabase db){
             String APIURL = "http://211.237.50.150:7080/openapi/"+ APIKEY +
                     "/xml/Grid_20200713000000000605_1/1/1?&RELAX_USE_YN=Y";
             try {
@@ -84,19 +97,9 @@ public class DataManager {
                     result.append(Jsoup.connect(partURL).method(Connection.Method.GET).execute().parse().html());
                 }
 
-//                for(int idx=0; idx<totalCnt; idx++){
-//                    Elements restaurantsInfo = result.select("row");
-//                    Element element = restaurantsInfo.get(idx);
-//                    Log.i(idx+"",element.select("RELAX_RSTRNT_NM").text());
-////                        Log.i(idx+"",element.select("ROW_NUM").text());
-//                    String restaurantName = element.select("RELAX_RSTRNT_NM").text().replaceAll("'", "-");
-//                }
-                Geocoder g = new Geocoder(this.context);
-                List<Address> addresses = null;
-                String addr = result.select("row").get(0).select("RELAX_ADD1").text();
-                Log.i("address", addr);
-                addresses = g.getFromLocationName(addr, 1);
-                Log.i("gps", addresses.get(0).getLatitude()+ ", " + addresses.get(0).getLongitude());
+                //해당 도큐먼트 객체를 넘겨주고 DB에 삽입한다.
+                InsertDB(db, result, totalCnt);
+
             } catch (IOException e) {
                 Log.i("FAIL", "Exception occured");
                 e.printStackTrace();
@@ -107,6 +110,74 @@ public class DataManager {
 
         }
 
+        public void InsertDB(SQLiteDatabase db, Document result, int totalCnt){
+//하나의 식당에 대한 정보는 다음과 같은 형식을 가집니다.
+//                <row>
+//                <ROW_NUM>1</ROW_NUM>
+//                <RELAX_SEQ>2462</RELAX_SEQ>
+//                <RELAX_ZIPCODE>420000</RELAX_ZIPCODE>
+//                <RELAX_SI_NM>경기도</RELAX_SI_NM>
+//                <RELAX_SIDO_NM>부천시</RELAX_SIDO_NM>
+//                <RELAX_RSTRNT_NM>힛더스팟(현대중동점)</RELAX_RSTRNT_NM>
+//                <RELAX_RSTRNT_REPRESENT>김주엽</RELAX_RSTRNT_REPRESENT>
+//                <RELAX_ADD1>경기도 부천시 길주로 180</RELAX_ADD1>
+//                <RELAX_ADD2>현대백화점 8층</RELAX_ADD2>
+//                <RELAX_GUBUN>일반음식점</RELAX_GUBUN>
+//                <RELAX_GUBUN_DETAIL>서양식</RELAX_GUBUN_DETAIL>
+//                <RELAX_RSTRNT_TEL>032-623-2882</RELAX_RSTRNT_TEL>
+//                <RELAX_USE_YN>Y</RELAX_USE_YN>
+//                <RELAX_RSTRNT_ETC/>
+//                </row>
+//            db.execSQL("PRAGMA foreign_keys=ON");
+//            db.execSQL("CREATE TABLE Restaurant (SEQ INTEGER PRIMARY KEY, ZIPCODE INTEGER, SI_NM TEXT, SIDO_NM TEXT," +
+//                    "RSTRNT_NM TEXT, RSTRNT_REPRESENT TEXT, ADD1 TEXT, ADD2 TEXT, GUBUN TEXT, GUBUN_DETAIL TEXT, " +
+//                    "RSTRNT_TEL TEXT, LATITUDE REAL, LONGITUDE REAL, LASTUPDATETIME TEXT);");
+            // 현재시간을 msec 으로 구한다.
+            long now = System.currentTimeMillis();
+            // 현재시간을 date 변수에 저장한다.
+            Date date = new Date(now);
+            // 시간을 나타냇 포맷을 정한다 ( yyyy/MM/dd 같은 형태로 변형 가능 )
+            SimpleDateFormat sdfNow = new SimpleDateFormat("yyyy/MM/dd");
+            // nowDate 변수에 값을 저장한다.
+            String currentTime = sdfNow.format(date);
+
+            for(int idx=0; idx<totalCnt; idx++){
+                Elements restaurantsInfo = result.select("row");
+                Element element = restaurantsInfo.get(idx);
+                int SEQ = Integer.parseInt(element.select("RELAX_SEQ").text());
+                int ZIPCODE = Integer.parseInt(element.select("RELAX_ZIPCODE").text());
+                String SI_NM = element.select("RELAX_SI_NM").text();
+                String SIDO_NM = element.select("RELAX_SIDO_NM").text();
+                String RSTRNT_NM = element.select("RELAX_RSTRNT_NM").text();
+                String RSTRNT_REPRESENT = element.select("RELAX_RSTRNT_REPRESENT").text();
+                String ADD1 = element.select("RELAX_ADD1").text();
+                String ADD2 = element.select("RELAX_ADD2").text();
+                String GUBUN = element.select("RELAX_GUBUN").text();
+                String GUBUN_DETAIL = element.select("RELAX_GUBUN_DETAIL").text();
+                String RSTRNT_TEL = element.select("RELAX_RSTRNT_TEL").text();
+                Address converted = getAddress(ADD1);
+                double latitude = converted.getLatitude();
+                double longitude = converted.getLongitude();
+
+                Log.i(idx+"",RSTRNT_NM);
+                db.execSQL("INSERT OR REPLACE INTO Restaurant VALUES("+SEQ+", "+ZIPCODE+", '"+SI_NM+"', " +
+                        "'"+SIDO_NM+"', '"+RSTRNT_NM+"', '"+RSTRNT_REPRESENT+"', '"+ADD1+"', '"+ADD2+"', " +
+                        "'"+GUBUN+"', '"+GUBUN_DETAIL+"', '"+RSTRNT_TEL+"', "+latitude+", "+longitude+", '"+currentTime+"');");
+            }
+        }
+
+        public Address getAddress(String addr){
+            Geocoder g = new Geocoder(this.context);
+            Address converted = null;
+            Log.i("address", addr);
+            try {
+                converted = g.getFromLocationName(addr, 1).get(0);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+//            Log.i("gps", addresses.get(0).getLatitude()+ ", " + addresses.get(0).getLongitude());
+            return  converted;
+        }
         //포그라운드에서 실행하는 내용
         @Override
         protected void onPostExecute(String s) {

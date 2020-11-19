@@ -36,11 +36,7 @@ public class myDBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         //이곳에선 테이블이 존재하면 없애고 새로 만들어준다.
-        db.execSQL("DROP TABLE IF EXISTS Student");
-        db.execSQL("DROP TABLE IF EXISTS Subject");
-        db.execSQL("DROP TABLE IF EXISTS OpenedClass");
-        db.execSQL("DROP TABLE IF EXISTS LearnedClass");
-        db.execSQL("DROP TABLE IF EXISTS Curriculum");
+        db.execSQL("DROP TABLE IF EXISTS Restaurant");
         onCreate(db);
     }
 }

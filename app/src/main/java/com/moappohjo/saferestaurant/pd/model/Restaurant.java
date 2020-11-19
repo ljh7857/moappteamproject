@@ -25,10 +25,23 @@ public class Restaurant implements Comparable<Restaurant> {
 
     }
 
-    private int imageOf(String type) {
+    public static int imageOf(String type) {
         int ret = R.drawable.ic_food;
         switch (type) {
-            case "":
+            case "한식":
+                ret = R.drawable.rice;
+                break;
+            case "일식":
+                ret = R.drawable.sushi;
+                break;
+            case "서양식":
+                ret = R.drawable.pizza;
+                break;
+            case "중식":
+                ret = R.drawable.chinese;
+                break;
+            case "기타 음식점업":
+                ret = R.drawable.shop;
                 break;
             default:
                 break;

@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Type listRestaurantType = new TypeToken<List<Restaurant>>() {}.getType();
         List<Restaurant> jsonList = gs.fromJson(jsonFileString, listRestaurantType);
         List<Restaurant> restaurants = jsonList.stream().map((r) -> {
-            r.image = R.drawable.ic_food;
+            r.image = Restaurant.imageOf(r.type);
             return r;
         }).collect(Collectors.toList());
         return restaurants;

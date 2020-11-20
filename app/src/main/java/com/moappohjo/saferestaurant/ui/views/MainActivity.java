@@ -1,5 +1,6 @@
 package com.moappohjo.saferestaurant.ui.views;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.location.Address;
 import android.os.Bundle;
@@ -53,12 +54,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private MainViewModel viewModel = new MainViewModel();
     private RecyclerViewAdapter recyclerViewAdapter;
     private Button showListButton;
+    public static Context mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setNaverMap();
         setContentView(R.layout.activity_main);
+        mContext = this;
         showListButton = findViewById(R.id.showListButton);
         setShowListObserver();
         setSearchView();
@@ -82,13 +85,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private void setMarkers() {
+    public void setMarkers() {
         List<Marker> markers = getMarkersFrom("markers.json");
         viewModel.markers.addAll(markers);
         viewModel.markers.getValue().stream().forEach((m)->{m.setMap(naverMap);});
     }
 
-    private void setRecyclerView() {
+    public void setRecyclerView() {
         recyclerView = findViewById(R.id.recycler_view);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         recyclerView.setHasFixedSize(true);

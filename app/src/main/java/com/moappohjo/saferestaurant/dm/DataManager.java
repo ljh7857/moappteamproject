@@ -15,6 +15,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
@@ -25,9 +26,11 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 
 public class DataManager {
@@ -45,7 +48,7 @@ public class DataManager {
             ft.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             //ft.execute();
         } else {
-
+            Toast.makeText(this.context, "인터넷 연결 상태를 확인해주세요.", Toast.LENGTH_SHORT).show();
         }
         return true;
     }
@@ -74,10 +77,12 @@ public class DataManager {
         @Override
         protected String doInBackground(Void... voids) {
             String APIKEY = "0f8513fb24b87da71f5eb1594e0ac11b35b2be4afe6c06a1c543dcd9169a376f";
+            final long upDateThresholdDays = 7;
             myDBHelper dbHelper = new myDBHelper(this.context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             //강제로 db의 table drop
             //dbHelper.onUpgrade(db, 39, 39);
+
             //db에서 restaurant data가 있는지 판별하고, 없다면 모두 집어넣는다.
             Cursor c = db.rawQuery("SELECT COUNT(*) FROM Restaurant", null);
             c.moveToFirst();
@@ -85,15 +90,59 @@ public class DataManager {
                 updateAllData(APIKEY, db);
             } else {
                 Log.i("DB not empty", "success");
-                //사용자의 위치를 구하고, 해당 시도의 정보 중 outdated 된 것이 있다면 해당 지역을 update한다.
-                //ocation userLoc = getLocation(this.context);
-                //System.out.println(getFromLocation(userLoc.getLatitude(), userLoc.getLongitude()));
-            }
+                //사용자의 위치를 기반으로 해당 시도의 정보 중 outdated 된 것이 있다면 해당 지역을 update한다.
+                //임시로 사용하기 위한 객체를 채워넣어줬습니다.
+                try {
+                    address = getFromLocationName("대구광역시 북구 대학로 79");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //db에서 같은 시도에 속하는 위치들을 가져와 최근 업데이트 시간을 분석합니다.
+                Log.i("주소", address.getAddressLine(0));
+                StringTokenizer stk = new StringTokenizer(address.getAddressLine(0));
+                stk.nextToken();
+                String SI_NM = stk.nextToken();
+                // 현재시간을 msec 으로 구한다.
+                SimpleDateFormat format = new SimpleDateFormat("yyyy/mm/dd");
+                long now = System.currentTimeMillis();
+                // 현재시간을 date 변수에 저장한다.
+                Date currentTime = new Date(now);
+                try {
+                    currentTime = format.parse(format.format(currentTime));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
 
+                Cursor cursor = db.rawQuery("SELECT LASTUPDATETIME FROM Restaurant " +
+                        "WHERE SI_NM = '"+SI_NM+"';", null);
+                cursor.moveToFirst();
+
+                int i, rowCnt = cursor.getCount();
+                for(i=0; i<rowCnt; i++){
+                    Date updateTime = null;
+                    try {
+                        updateTime = format.parse(cursor.getString(0));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    long elapsedTime = currentTime.getTime() - updateTime.getTime();
+                    elapsedTime /= (24*60*60*1000);
+                    elapsedTime = Math.abs(elapsedTime);
+                    //Log.i("경과 시간", elapsedTime+"");
+                    if(elapsedTime>upDateThresholdDays)
+                        break;
+                    cursor.moveToNext();
+                }
+                //업데이트 된 기간이 threshold보다 크다면 해당 기간을 업데이트 한다.
+                if(i!=rowCnt){
+                    updateSpecificRegion(APIKEY, db, SI_NM);
+                }
+            }
             return "Fail";
         }
 
         public void updateAllData(String APIKEY, SQLiteDatabase db) {
+
             String APIURL = "http://211.237.50.150:7080/openapi/" + APIKEY +
                     "/xml/Grid_20200713000000000605_1/1/1?&RELAX_USE_YN=Y";
             try {
@@ -119,8 +168,30 @@ public class DataManager {
             }
         }
 
-        public void updateSpecificRegion() {
+        public void updateSpecificRegion(String APIKEY, SQLiteDatabase db, String SI_NM) {
+            String APIURL = "http://211.237.50.150:7080/openapi/" + APIKEY +
+                    "/xml/Grid_20200713000000000605_1/1/1?&RELAX_USE_YN=Y&RELAX_SI_NM="+SI_NM;
+            try {
+                //우성 길이를 하나만 가져와서 총 몇 개의 안심식당이 있는지 확인합니다.
+                Document result = Jsoup.connect(APIURL).method(Connection.Method.GET).execute().parse();
+                int totalCnt = Integer.parseInt(result.select("totalCnt").text());
 
+                //한 번의 요청 당 최대 1000개의 식당을 검색할 수 있습니다.
+                //1000개씩 나눠 받은 결과를 result에 html형태로 붙여넣습니다.
+                for (int startIndex = 1; startIndex <= totalCnt; startIndex += 1000) {
+                    int endIndex = (startIndex + 999 < totalCnt) ? startIndex + 999 : totalCnt;
+                    String partURL = "http://211.237.50.150:7080/openapi/" + APIKEY +
+                            "/xml/Grid_20200713000000000605_1/" + startIndex + "/" + endIndex + "?&RELAX_USE_YN=Y&RELAX_SI_NM="+SI_NM;
+                    result.append(Jsoup.connect(partURL).method(Connection.Method.GET).execute().parse().html());
+                }
+
+                //해당 도큐먼트 객체를 넘겨주고 DB에 삽입한다.
+                InsertDB(db, result, totalCnt);
+
+            } catch (IOException e) {
+                Log.i("FAIL", "Exception occured");
+                e.printStackTrace();
+            }
         }
 
         public void InsertDB(SQLiteDatabase db, Document result, int totalCnt) {
@@ -240,27 +311,27 @@ public class DataManager {
         return haveConnectedWifi || haveConnectedMobile;
     }
 
-    protected Location getLocation(Context context) {
-        final int GPS_ENABLE_REQUEST_CODE = 2001;
-        final int PERMISSIONS_REQUEST_CODE = 100;
-        String[] REQUIRED_PERMISSIONS  = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-        final LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            if(ActivityCompat.shouldShowRequestPermissionRationale((Activity) context, REQUIRED_PERMISSIONS[0])){
-                ActivityCompat.requestPermissions((Activity)context, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE);
-            }else {
-                ActivityCompat.requestPermissions((Activity)context, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE);
-            }
-        }
-        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        return location;
-    }
+//    protected Location getLocation(Context context) {
+//        final int GPS_ENABLE_REQUEST_CODE = 2001;
+//        final int PERMISSIONS_REQUEST_CODE = 100;
+//        String[] REQUIRED_PERMISSIONS  = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+//        final LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+//        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+//                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//            if(ActivityCompat.shouldShowRequestPermissionRationale((Activity) context, REQUIRED_PERMISSIONS[0])){
+//                ActivityCompat.requestPermissions((Activity)context, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE);
+//            }else {
+//                ActivityCompat.requestPermissions((Activity)context, REQUIRED_PERMISSIONS, PERMISSIONS_REQUEST_CODE);
+//            }
+//        }
+//        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//        return location;
+//    }
 }
 
 

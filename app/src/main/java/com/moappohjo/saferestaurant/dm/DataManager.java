@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
@@ -25,24 +27,29 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 
 public class DataManager {
     private Context context;
     Address address;
-
     public DataManager(Context context, Address address) {
         this.context = context;
         this.address = address;
     }
 
     public boolean loadData() {
+        //api key를 property 파일에 저장합니다. optional way
         if (haveNetworkConnection(this.context)) {
             FetchItemTask ft = new FetchItemTask(this.context, this.address);
             ft.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -58,11 +65,13 @@ public class DataManager {
         ProgressDialog progressDialog;
         Context context;
         Address address;
+        private String APIKEY;
 
         public FetchItemTask(Context context, Address address) {
             super();
             this.context = context;
             this.address = address;
+            APIKEY = storeProperty();
         }
 
         protected void onPreExecute() {
@@ -76,7 +85,7 @@ public class DataManager {
         //백그라운드에서 실행하는 내용
         @Override
         protected String doInBackground(Void... voids) {
-            String APIKEY = "0f8513fb24b87da71f5eb1594e0ac11b35b2be4afe6c06a1c543dcd9169a376f";
+
             final long upDateThresholdDays = 7;
             myDBHelper dbHelper = new myDBHelper(this.context);
             SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -92,10 +101,12 @@ public class DataManager {
                 Log.i("DB not empty", "success");
                 //사용자의 위치를 기반으로 해당 시도의 정보 중 outdated 된 것이 있다면 해당 지역을 update한다.
                 //임시로 사용하기 위한 객체를 채워넣어줬습니다.
-                try {
-                    address = getFromLocationName("대구광역시 북구 대학로 79");
-                } catch (IOException e) {
-                    e.printStackTrace();
+                while(address==null) {
+                    try {
+                        address = getFromLocationName("대구광역시 북구 대학로 79");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
                 //db에서 같은 시도에 속하는 위치들을 가져와 최근 업데이트 시간을 분석합니다.
                 Log.i("주소", address.getAddressLine(0));
@@ -292,6 +303,21 @@ public class DataManager {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
         }
+
+        private String storeProperty(){
+            Properties properties = new Properties();;
+            AssetManager assetManager = context.getAssets();
+            InputStream inputStream = null;
+            try {
+                inputStream = assetManager.open("dm.properties");
+                properties.load(inputStream);
+                //System.out.println(properties.getProperty("db.APIKEY"));
+                return properties.getProperty("db.APIKEY");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 
     protected boolean haveNetworkConnection(Context context) {
@@ -332,6 +358,7 @@ public class DataManager {
 //        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 //        return location;
 //    }
+
 }
 
 

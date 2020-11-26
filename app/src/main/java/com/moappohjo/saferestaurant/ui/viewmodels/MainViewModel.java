@@ -53,6 +53,7 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
         // 위경도를 주소로 역 지오코딩
         Address addr = getFromLocation(lat,lng);
         // 주요 지명 받기(안드로이드 자체 메소드)
+        if (addr == null) return;
         String si = addr.getAdminArea();
         if(si.equals("Daegu"))
             si = "대구광역시";

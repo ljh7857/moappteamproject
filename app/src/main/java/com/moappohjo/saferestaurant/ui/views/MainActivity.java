@@ -3,10 +3,12 @@ package com.moappohjo.saferestaurant.ui.views;
 import android.content.Context;
 import android.graphics.Color;
 import android.location.Address;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private RecyclerViewAdapter recyclerViewAdapter;
     private Button showListButton;
     public static Context mContext;
+    private static Location prevLocation = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mContext = this;
         showListButton = findViewById(R.id.showListButton);
         setShowListObserver();
+        setMarkersObserver();
         setSearchView();
         setRecyclerView();
         //사용자의 현재 위치를 얻어서 넣어주세요.
@@ -72,6 +76,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(!dm.loadData()){
 
         }
+    }
+
+    private void setMarkersObserver() {
+        viewModel.markers.observe(this, new Observer<List<Marker>>() {
+            @Override
+            public void onChanged(List<Marker> markers) {
+                markers.forEach(m -> {
+                    m.setOnClickListener(new Overlay.OnClickListener() {
+                        @Override
+                        public boolean onClick(@NonNull Overlay overlay) {
+                            List<Restaurant> items = viewModel.items.getValue().stream().filter((i)->(i.id == overlay.getZIndex())).collect(Collectors.toList());
+                            if (items.size() == 0) return false;
+                            Restaurant restaurant = items.get(0);
+                            viewModel.items.remove(restaurant);
+                            viewModel.items.add(0, restaurant);
+                            viewModel.setIsListShowing(true);
+                            recyclerView.smoothScrollToPosition(0);
+                            return true;
+                        }
+                    });
+                    m.setMap(naverMap);});
+            }
+        });
     }
 
     private void setShowListObserver() {
@@ -85,20 +112,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    public void setMarkers() {
-        List<Marker> markers = getMarkersFrom("markers.json");
-        viewModel.markers.addAll(markers);
-        viewModel.markers.getValue().stream().forEach((m)->{m.setMap(naverMap);});
-    }
-
     public void setRecyclerView() {
         recyclerView = findViewById(R.id.recycler_view);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(layoutManager);
-
-        List<Restaurant> restaurants = getRestaurantsFrom("restaurants.json");
-        viewModel.items.addAll(restaurants);
 
         recyclerViewAdapter = new RecyclerViewAdapter(getApplicationContext(), viewModel.items.getValue(), R.layout.activity_main);
         recyclerViewAdapter.setOnItemClickListener(new RecyclerViewAdapter.OnItemClickListener() {
@@ -139,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void setNaverMap() {
+        locationSource = new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE);
         NaverMapSdk.getInstance(this).setClient(
                 new NaverMapSdk.NaverCloudPlatformClient("sc9032srv9")
         );
@@ -150,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             fm.beginTransaction().add(R.id.naver_map, mapFragment).commit();
         }
         mapFragment.getMapAsync(this);
-        locationSource = new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE);
+
     }
 
     @Override
@@ -173,55 +192,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         naverMap.setLocationSource(locationSource);
         LocationOverlay locationOverlay = naverMap.getLocationOverlay();
         locationOverlay.setVisible(true);
-        setMarkers();
+        naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
+        naverMap.addOnLocationChangeListener(new NaverMap.OnLocationChangeListener() {
+            @Override
+            public void onLocationChange(@NonNull Location location) {
+                if (prevLocation != null && isLocationSame(location, prevLocation)) return;
+                prevLocation = new Location(location);
+                if (location.hasAccuracy()) {
+                    //Toast.makeText(this, "haha", Toast.LENGTH_SHORT).show();
+                    viewModel.markers.getValue().forEach(m->{m.setMap(null);});
+                    viewModel.markers.clear();
+                    viewModel.items.clear();
+                    viewModel.refresh(location.getLatitude(), location.getLongitude());
+                    naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
+                }
+            }
+        });
+        //LatLng p = naverMap.getLocationOverlay().getPosition();
+        //this.viewModel.refresh(p.latitude, p.longitude);
+        //setMarkers();
+    }
+
+    private boolean isLocationSame(Location location, Location prevLocation) {
+        return Math.abs(location.getLongitude() - prevLocation.getLongitude()) < 0.1
+                && Math.abs(location.getLatitude() - prevLocation.getLatitude()) < 0.1;
     }
 
     public void onClickShowList(View v) {
         viewModel.setIsListShowing(!viewModel.getIsListShowing().getValue());
     }
-
-    private List<Restaurant> getRestaurantsFrom(final String fileName) {
-        String jsonFileString = Utils.getJsonFromAssets(getApplicationContext(), fileName);
-        Gson gs = new Gson();
-        Type listRestaurantType = new TypeToken<List<Restaurant>>() {}.getType();
-        List<Restaurant> jsonList = gs.fromJson(jsonFileString, listRestaurantType);
-        List<Restaurant> restaurants = jsonList.stream().map((r) -> {
-            r.image = Restaurant.imageOf(r.type);
-            return r;
-        }).collect(Collectors.toList());
-        return restaurants;
-    }
-
-    private List<Marker> getMarkersFrom(final String fileName) {
-        String jsonFileString = Utils.getJsonFromAssets(getApplicationContext(), fileName);
-        Gson gs = new Gson();
-        Type listMarkerType = new TypeToken<List<MarkerDTO>>() {}.getType();
-        List<MarkerDTO> jsonList = gs.fromJson(jsonFileString, listMarkerType);
-        List<Marker> markers = jsonList.stream().map((m) -> {
-            Marker marker = new Marker();
-            // z index as id
-            marker.setZIndex(m.id);
-            marker.setPosition(new LatLng(m.lat, m.lng));
-            marker.setCaptionText(m.caption);
-            marker.setCaptionColor(Color.BLUE);
-            marker.setCaptionHaloColor(Color.rgb(200,255,200));
-            marker.setCaptionTextSize(18);
-            marker.setOnClickListener(new Overlay.OnClickListener() {
-                @Override
-                public boolean onClick(@NonNull Overlay overlay) {
-                    List<Restaurant> items = viewModel.items.getValue().stream().filter((i)->(i.id == overlay.getZIndex())).collect(Collectors.toList());
-                    if (items.size() == 0) return false;
-                    Restaurant restaurant = items.get(0);
-                    viewModel.items.remove(restaurant);
-                    viewModel.items.add(0, restaurant);
-                    viewModel.setIsListShowing(true);
-                    return true;
-                }
-            });
-            return marker;
-        }).collect(Collectors.toList());
-        return markers;
-    }
-
 
 }

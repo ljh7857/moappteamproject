@@ -7,7 +7,11 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -41,6 +45,8 @@ import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.w3c.dom.Text;
+
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +54,7 @@ import java.util.stream.Stream;
 
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+    private LinearLayout searchViewContainer;
     private SearchView searchView;
     private RecyclerView recyclerView;
     private NaverMap naverMap;
@@ -58,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button showListButton;
     public static Context mContext;
     private static Location prevLocation = null;
+    private Spinner searchOptionSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,12 +153,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void setSearchView() {
         searchView = findViewById(R.id.search_view);
+        searchViewContainer = findViewById(R.id.search_container);
+        searchOptionSpinner = findViewById(R.id.search_option_spinner);
+        //TextView t = (TextView)(searchOptionSpinner.getSelectedItem());
+        //searchOption = t.getText().toString();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                viewModel.search(query, searchOptionSpinner.getSelectedItem().toString());
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
 
         searchView.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) searchView.setBackgroundColor(Color.WHITE);
-                else searchView.setBackgroundColor(Color.TRANSPARENT);
+                if (hasFocus) {
+                    searchViewContainer.setBackgroundColor(Color.WHITE);
+                }
+                else  {
+                    searchViewContainer.setBackgroundColor(Color.TRANSPARENT);
+                }
             }
         });
 

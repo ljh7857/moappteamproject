@@ -14,12 +14,26 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/search_view"
+        <LinearLayout
+            android:id="@+id/search_container"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:iconifiedByDefault="false"
-            app:queryHint="@string/desc_searchView"/>
+            android:layout_height="wrap_content">
+            <androidx.appcompat.widget.SearchView
+                android:layout_weight="1"
+                android:id="@+id/search_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:iconifiedByDefault="false"
+                app:queryHint="@string/desc_searchView"/>
+            <Spinner
+                android:id="@+id/search_option_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:entries="@array/search_option"
+                android:theme="@style/SpinnerTheme"/>
+        </LinearLayout>
+
         <LinearLayout
             android:animateLayoutChanges="true"
             android:layout_width="match_parent"

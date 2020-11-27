@@ -6,7 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -32,7 +34,7 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
     String path = "/data/data/com.moappohjo.saferestaurant/databases/groupDB";
     SQLiteDatabase db = SQLiteDatabase.openDatabase(path,null,SQLiteDatabase.OPEN_READONLY);
     private Context context;
-
+    public asyncTask aT = new asyncTask();
     public MutableLiveData<Boolean> getIsListShowing() {
         if (isListShowing == null) {
             isListShowing = new MutableLiveData<>(false);
@@ -53,12 +55,11 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
         // 위경도를 주소로 역 지오코딩
         Address addr = getFromLocation(lat,lng);
         // 주요 지명 받기(안드로이드 자체 메소드)
-        if (addr == null) return;
-        String si = addr.getAdminArea();
-        if(si.equals("Daegu"))
+        String si;
+        if (addr == null)
             si = "대구광역시";
-        else if (si.equals("Seoul"))
-            si = "서울특별시";
+        else si = convertAddr(addr);
+
         //set,
         Cursor c = db.rawQuery("SELECT * FROM Restaurant WHERE SI_NM == '"+si+"';",null);
         processData(c);
@@ -103,5 +104,63 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
         }
 //            Log.i("gps", addresses.get(0).getLatitude()+ ", " + addresses.get(0).getLongitude());
         return converted;
+    }
+    public String convertAddr(Address addr)
+    {
+        String si = addr.getAdminArea();
+        if (TextUtils.isEmpty(si))
+            si = "대구광역시";
+       switch (si) {
+           case "Daegu":
+               si = "대구광역시";
+           case "Seoul":
+               si = "서울특별시";
+           case "Gyeongsangbuk-do" :
+               si = "경상북도";
+           case "Gyeongsangnam-do":
+               si = "경상남도";
+           case "Jeollanam-do":
+               si = "전라남도";
+           case "Jeollabuk-do":
+               si = "전라북도";
+           case "Chungcheongbuk-do":
+               si = "충청북도";
+           case "Chungcheongnam-do" :
+               si = "충청남도";
+           case "Gangwon-do" :
+               si = "강원도";
+           case "Jeju-do":
+               si = "제주도";
+           case "Incheon":
+               si = "인천광역시";
+           case "Gyeonggi-do":
+               si = "경기도";
+           case "Gwangju":
+               si = "광주광역시";
+           case "Daejeon":
+               si = "대전광역시";
+           case "Busan":
+               si = "부산광역시";
+           case "Ulsan" :
+               si = "울산광역시";
+       }
+        return si;
+    }
+
+    public class asyncTask extends AsyncTask<String,Integer,Integer>
+    {
+        @Override
+        protected Integer doInBackground(String... strings) {
+            if (strings[0].equals("1"))
+            {
+                markers.getValue().forEach(m->{m.setMap(null);});
+                refresh(Double.parseDouble(strings[1]),Double.parseDouble(strings[2]));
+            }
+            else if (strings[0].equals("2"))
+            {
+                search(strings[1],strings[2]);
+            }
+            return null;
+        }
     }
 }

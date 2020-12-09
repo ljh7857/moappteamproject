@@ -69,7 +69,19 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
     {
         //주소나 업종 등 검색옵션을 opt로 받고 검색str을 DB와 비교할 예정
         //opt는 DB의 키 값으로 사용, ui에서 스피너뷰로 받으면??
-        Cursor c = db.rawQuery("SELECT * FROM Restaurant WHERE "+opt+" == '"+str+"';",null);
+        items.clear();
+        markers.clear();
+        String col = null;
+        switch (opt) {
+            case "주소":
+                col = "ADD1";
+            case "메뉴":
+                col = "GUBUN_DETAIL";
+            case "가게":
+                col = "RSTRNT_NM";
+        }
+
+        Cursor c = db.rawQuery("SELECT * FROM Restaurant WHERE "+col+" like '%"+str+"%';",null);
         processData(c);
     }
     public void processData(Cursor c)

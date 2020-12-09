@@ -80,10 +80,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setRecyclerView();
         //사용자의 현재 위치를 얻어서 넣어주세요.
         Address address=null;
-        DataManager dm = new DataManager(getApplicationContext(), address);
-        if(!dm.loadData()){
-
-        }
+//        DataManager dm = new DataManager(getApplicationContext(), address);
+//        if(!dm.loadData()){
+//
+//        }
     }
 
     private void setMarkersObserver() {
@@ -162,7 +162,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onQueryTextSubmit(String query) {
                 viewModel.search(query, searchOptionSpinner.getSelectedItem().toString());
-                return false;
+                searchView.clearFocus();
+                viewModel.setIsListShowing(true);
+                return true;
             }
 
             @Override
@@ -229,9 +231,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 prevLocation = new Location(location);
                 if (location.hasAccuracy()) {
                     //Toast.makeText(this, "haha", Toast.LENGTH_SHORT).show();
-                    viewModel.markers.getValue().forEach(m->{m.setMap(null);});
-                    viewModel.markers.clear();
-                    viewModel.items.clear();
                     viewModel.refresh(location.getLatitude(), location.getLongitude());
                     naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
                 }

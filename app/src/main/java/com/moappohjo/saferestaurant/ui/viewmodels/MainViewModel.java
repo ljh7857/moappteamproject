@@ -22,6 +22,7 @@ import com.moappohjo.saferestaurant.pd.model.Restaurant;
 import com.moappohjo.saferestaurant.ui.helper.ListLiveData;
 import com.moappohjo.saferestaurant.ui.views.MainActivity;
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.NaverMap;
 import com.naver.maps.map.overlay.Marker;
 
 import java.io.File;
@@ -31,6 +32,7 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
     public ListLiveData<Restaurant> items = new ListLiveData<>();
     public ListLiveData<Marker> markers = new ListLiveData<>();
     private MutableLiveData<Boolean> isListShowing;
+    String si;
     String path = "/data/data/com.moappohjo.saferestaurant/databases/groupDB";
     SQLiteDatabase db = SQLiteDatabase.openDatabase(path,null,SQLiteDatabase.OPEN_READONLY);
     private Context context;
@@ -51,15 +53,14 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
     {
         //flush Listlivedata
         items.clear();
+        markers.getValue().forEach(m->{m.setMap(null);});
         markers.clear();
         // 위경도를 주소로 역 지오코딩
         Address addr = getFromLocation(lat,lng);
         // 주요 지명 받기(안드로이드 자체 메소드)
-        String si;
         if (addr == null)
             si = "대구광역시";
         else si = convertAddr(addr);
-
         //set,
         Cursor c = db.rawQuery("SELECT * FROM Restaurant WHERE SI_NM == '"+si+"';",null);
         processData(c);
@@ -70,18 +71,22 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
         //주소나 업종 등 검색옵션을 opt로 받고 검색str을 DB와 비교할 예정
         //opt는 DB의 키 값으로 사용, ui에서 스피너뷰로 받으면??
         items.clear();
+        markers.getValue().forEach(m->{m.setMap(null);});
         markers.clear();
         String col = null;
         switch (opt) {
             case "주소":
                 col = "ADD1";
+                break;
             case "메뉴":
                 col = "GUBUN_DETAIL";
+                break;
             case "가게":
                 col = "RSTRNT_NM";
+                break;
         }
 
-        Cursor c = db.rawQuery("SELECT * FROM Restaurant WHERE "+col+" like '%"+str+"%';",null);
+        Cursor c = db.rawQuery("SELECT * FROM Restaurant WHERE "+col+" like '%"+str+"%' AND SI_NM == '"+si+"';",null);
         processData(c);
     }
     public void processData(Cursor c)

@@ -130,36 +130,52 @@ public class MainViewModel extends androidx.lifecycle.ViewModel {
        switch (si) {
            case "Daegu":
                si = "대구광역시";
+               break;
            case "Seoul":
                si = "서울특별시";
+               break;
            case "Gyeongsangbuk-do" :
                si = "경상북도";
+               break;
            case "Gyeongsangnam-do":
                si = "경상남도";
+               break;
            case "Jeollanam-do":
                si = "전라남도";
+               break;
            case "Jeollabuk-do":
                si = "전라북도";
+               break;
            case "Chungcheongbuk-do":
                si = "충청북도";
+               break;
            case "Chungcheongnam-do" :
                si = "충청남도";
+               break;
            case "Gangwon-do" :
                si = "강원도";
+               break;
            case "Jeju-do":
                si = "제주도";
+               break;
            case "Incheon":
                si = "인천광역시";
+               break;
            case "Gyeonggi-do":
                si = "경기도";
+               break;
            case "Gwangju":
                si = "광주광역시";
+               break;
            case "Daejeon":
                si = "대전광역시";
+               break;
            case "Busan":
                si = "부산광역시";
+               break;
            case "Ulsan" :
                si = "울산광역시";
+               break;
        }
         return si;
     }

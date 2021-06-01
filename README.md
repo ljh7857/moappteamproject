@@ -6,4 +6,5 @@ https://youtu.be/projIR1rjQo
 
 
 ## 수상
-![image](https://user-images.githubusercontent.com/20037035/120251477-9981e880-c2bc-11eb-8d13-b00c639a7e26.png)
+![대경권 공공데이터 활용 경진대회 우수상](https://user-images.githubusercontent.com/20037035/120251513-ba4a3e00-c2bc-11eb-80e5-024ef2f764ea.JPG)
+
